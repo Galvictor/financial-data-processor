@@ -47,9 +47,16 @@ markdown_content = result.document.export_to_markdown()
 
 # Processa linha por linha
 linhas_processadas = []
+primeira_linha_tabela = True
+
 for linha in markdown_content.split('\n'):
     # Se for uma linha da tabela (contém |)
     if '|' in linha:
+        if primeira_linha_tabela:
+            primeira_linha_tabela = False
+            linhas_processadas.append(linha)
+            continue
+
         # Divide a linha em colunas
         colunas = [col.strip() for col in linha.split('|')]
         # Formata cada coluna
