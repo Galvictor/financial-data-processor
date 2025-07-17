@@ -38,7 +38,9 @@ def formatar_numero(texto):
         return texto
 
 
-source = "pool-2025.xlsx"
+source = input("Digite o nome do arquivo XLSX: ")
+if not source.endswith('.xlsx'):
+    raise ValueError("O arquivo deve ser um arquivo XLSX.")
 converter = DocumentConverter()
 result = converter.convert(source)
 
@@ -68,6 +70,9 @@ for linha in markdown_content.split('\n'):
 # Reconstrói o conteúdo markdown
 novo_markdown = '\n'.join(linhas_processadas)
 
+# nomeia o arquivo de saída
+arquivo_saida = source.replace('.xlsx', '.md')
+
 # Salva o arquivo formatado
-with open("pool-2025-v2.md", "w", encoding='utf-8') as f:
+with open(arquivo_saida, "w", encoding='utf-8') as f:
     f.write(novo_markdown)
