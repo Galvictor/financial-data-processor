@@ -4,6 +4,7 @@ import locale
 import re
 import tempfile
 import os
+import glob
 
 # Configurar locale para português brasileiro
 locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
@@ -40,9 +41,28 @@ def formatar_numero(texto):
         return texto
 
 
-source = input("Digite o nome do arquivo XLSX: ")
-if not source.endswith('.xlsx'):
-    raise ValueError("O arquivo deve ser um arquivo XLSX.")
+# Lista todos os arquivos XLSX na pasta atual
+arquivos_xlsx = glob.glob('*.xlsx')
+
+if not arquivos_xlsx:
+    print("Nenhum arquivo XLSX encontrado na pasta atual.")
+    source = input("Digite o nome do arquivo XLSX: ")
+    if not source.endswith('.xlsx'):
+        raise ValueError("O arquivo deve ser um arquivo XLSX.")
+else:
+    print("Arquivos XLSX disponíveis na pasta:")
+    for idx, arquivo in enumerate(arquivos_xlsx, 1):
+        print(f"{idx}. {arquivo}")
+    
+    escolha_arquivo = input("\nDigite o número do arquivo que deseja processar: ").strip()
+    try:
+        idx_arquivo = int(escolha_arquivo) - 1
+        if 0 <= idx_arquivo < len(arquivos_xlsx):
+            source = arquivos_xlsx[idx_arquivo]
+        else:
+            raise ValueError("Número inválido.")
+    except ValueError:
+        raise ValueError("Entrada inválida. Digite um número válido.")
 
 # Lista todas as abas disponíveis
 excel_file = pd.ExcelFile(source)
