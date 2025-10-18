@@ -41,18 +41,23 @@ def formatar_numero(texto):
         return texto
 
 
-# Lista todos os arquivos XLSX na pasta atual
-arquivos_xlsx = glob.glob('*.xlsx')
+# Cria as pastas se não existirem
+os.makedirs('xlsx', exist_ok=True)
+os.makedirs('md', exist_ok=True)
+
+# Lista todos os arquivos XLSX na pasta xlsx
+arquivos_xlsx = glob.glob('xlsx/*.xlsx')
 
 if not arquivos_xlsx:
-    print("Nenhum arquivo XLSX encontrado na pasta atual.")
-    source = input("Digite o nome do arquivo XLSX: ")
-    if not source.endswith('.xlsx'):
-        raise ValueError("O arquivo deve ser um arquivo XLSX.")
+    print("Nenhum arquivo XLSX encontrado na pasta 'xlsx'.")
+    print("Por favor, coloque seus arquivos XLSX na pasta 'xlsx' e execute o script novamente.")
+    exit(1)
 else:
-    print("Arquivos XLSX disponíveis na pasta:")
+    print("Arquivos XLSX disponíveis na pasta 'xlsx':")
     for idx, arquivo in enumerate(arquivos_xlsx, 1):
-        print(f"{idx}. {arquivo}")
+        # Mostra apenas o nome do arquivo sem o caminho
+        nome_arquivo = os.path.basename(arquivo)
+        print(f"{idx}. {nome_arquivo}")
     
     escolha_arquivo = input("\nDigite o número do arquivo que deseja processar: ").strip()
     try:
@@ -131,12 +136,13 @@ for aba_nome in abas_processar:
     novo_markdown = '\n'.join(linhas_processadas)
 
     # nomeia o arquivo de saída
+    nome_base = os.path.basename(source).replace('.xlsx', '')
     if len(abas_processar) == 1:
-        arquivo_saida = source.replace('.xlsx', '.md')
+        arquivo_saida = os.path.join('md', f'{nome_base}.md')
     else:
         # Sanitiza o nome da aba para usar como nome de arquivo
         nome_aba_limpo = re.sub(r'[<>:"/\\|?*]', '_', aba_nome)
-        arquivo_saida = source.replace('.xlsx', f'_{nome_aba_limpo}.md')
+        arquivo_saida = os.path.join('md', f'{nome_base}_{nome_aba_limpo}.md')
 
     # Salva o arquivo formatado
     with open(arquivo_saida, "w", encoding='utf-8') as f:

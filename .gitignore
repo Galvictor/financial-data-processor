@@ -54,7 +54,8 @@ Thumbs.db
 *.xls
 *.csv
 *.json
-*.md
+xlsx/*.xlsx
+md/*.md
 *.pdf
 
 # Arquivos de cache
