@@ -2,6 +2,8 @@ from docling.document_converter import DocumentConverter
 import pandas as pd
 import locale
 import re
+import tempfile
+import os
 
 # Configurar locale para português brasileiro
 locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
@@ -41,38 +43,83 @@ def formatar_numero(texto):
 source = input("Digite o nome do arquivo XLSX: ")
 if not source.endswith('.xlsx'):
     raise ValueError("O arquivo deve ser um arquivo XLSX.")
-converter = DocumentConverter()
-result = converter.convert(source)
 
-# Obtém o conteúdo markdown atual
-markdown_content = result.document.export_to_markdown()
+# Lista todas as abas disponíveis
+excel_file = pd.ExcelFile(source)
+abas = excel_file.sheet_names
 
-# Processa linha por linha
-linhas_processadas = []
-primeira_linha_tabela = True
+print(f"\nAbas disponíveis no arquivo:")
+for idx, aba in enumerate(abas, 1):
+    print(f"{idx}. {aba}")
 
-for linha in markdown_content.split('\n'):
-    # Se for uma linha da tabela (contém |)
-    if '|' in linha:
-        if primeira_linha_tabela:
-            primeira_linha_tabela = False
-            linhas_processadas.append(linha)
-            continue
+# Pergunta qual aba o usuário quer processar
+escolha = input("\nDigite o número da aba que deseja processar (ou 'todas' para processar todas): ").strip()
 
-        # Divide a linha em colunas
-        colunas = [col.strip() for col in linha.split('|')]
-        # Formata cada coluna
-        colunas_formatadas = [formatar_numero(col) for col in colunas]
-        # Reconstrói a linha
-        linha = '|'.join(colunas_formatadas)
-    linhas_processadas.append(linha)
+if escolha.lower() == 'todas':
+    abas_processar = abas
+else:
+    try:
+        idx_escolhido = int(escolha) - 1
+        if 0 <= idx_escolhido < len(abas):
+            abas_processar = [abas[idx_escolhido]]
+        else:
+            raise ValueError("Número inválido.")
+    except ValueError:
+        raise ValueError("Entrada inválida. Digite um número válido ou 'todas'.")
 
-# Reconstrói o conteúdo markdown
-novo_markdown = '\n'.join(linhas_processadas)
+# Processa cada aba selecionada
+for aba_nome in abas_processar:
+    print(f"\nProcessando aba: {aba_nome}")
+    
+    # Cria um arquivo temporário com apenas a aba selecionada
+    with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
+        temp_path = temp_file.name
+        df = pd.read_excel(source, sheet_name=aba_nome)
+        df.to_excel(temp_path, index=False)
+    
+    # Converte o arquivo temporário
+    converter = DocumentConverter()
+    result = converter.convert(temp_path)
+    
+    # Remove o arquivo temporário
+    os.unlink(temp_path)
+    
+    # Obtém o conteúdo markdown atual
+    markdown_content = result.document.export_to_markdown()
 
-# nomeia o arquivo de saída
-arquivo_saida = source.replace('.xlsx', '.md')
+    # Processa linha por linha
+    linhas_processadas = []
+    primeira_linha_tabela = True
 
-# Salva o arquivo formatado
-with open(arquivo_saida, "w", encoding='utf-8') as f:
-    f.write(novo_markdown)
+    for linha in markdown_content.split('\n'):
+        # Se for uma linha da tabela (contém |)
+        if '|' in linha:
+            if primeira_linha_tabela:
+                primeira_linha_tabela = False
+                linhas_processadas.append(linha)
+                continue
+
+            # Divide a linha em colunas
+            colunas = [col.strip() for col in linha.split('|')]
+            # Formata cada coluna
+            colunas_formatadas = [formatar_numero(col) for col in colunas]
+            # Reconstrói a linha
+            linha = '|'.join(colunas_formatadas)
+        linhas_processadas.append(linha)
+
+    # Reconstrói o conteúdo markdown
+    novo_markdown = '\n'.join(linhas_processadas)
+
+    # nomeia o arquivo de saída
+    if len(abas_processar) == 1:
+        arquivo_saida = source.replace('.xlsx', '.md')
+    else:
+        # Sanitiza o nome da aba para usar como nome de arquivo
+        nome_aba_limpo = re.sub(r'[<>:"/\\|?*]', '_', aba_nome)
+        arquivo_saida = source.replace('.xlsx', f'_{nome_aba_limpo}.md')
+
+    # Salva o arquivo formatado
+    with open(arquivo_saida, "w", encoding='utf-8') as f:
+        f.write(novo_markdown)
+    
+    print(f"Arquivo salvo: {arquivo_saida}")
