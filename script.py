@@ -177,12 +177,9 @@ for aba_nome in abas_processar:
 
     # nomeia o arquivo de saída
     nome_base = os.path.basename(source).replace('.xlsx', '')
-    if len(abas_processar) == 1:
-        arquivo_saida = os.path.join('md', f'{nome_base}.md')
-    else:
-        # Sanitiza o nome da aba para usar como nome de arquivo
-        nome_aba_limpo = re.sub(r'[<>:"/\\|?*]', '_', aba_nome)
-        arquivo_saida = os.path.join('md', f'{nome_base}_{nome_aba_limpo}.md')
+    # Sanitiza o nome da aba para usar como nome de arquivo
+    nome_aba_limpo = re.sub(r'[<>:"/\\|?*]', '_', aba_nome)
+    arquivo_saida = os.path.join('md', f'{nome_base}-{nome_aba_limpo}.md')
 
     # Salva o arquivo formatado
     with open(arquivo_saida, "w", encoding='utf-8') as f:
